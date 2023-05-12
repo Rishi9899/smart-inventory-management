@@ -300,6 +300,7 @@ const theme = createTheme();
 
 export default function SignUp() {
   const navigate = useNavigate();
+  const [showPopup, setShowPopup] = useState(false);
 
   const SigninClickHandler = () => {
     navigate("/");
@@ -310,7 +311,6 @@ export default function SignUp() {
       name: name,
       email: email,
       phone: parseInt(phoneNumber),
-
       location: location,
       imgUrl:
         "https://previews.123rf.com/images/captainvector/captainvector1601/captainvector160107847/51389236-employee.jpg",
@@ -322,16 +322,34 @@ export default function SignUp() {
       .post("http://localhost:8080/user", userData)
       .then((response) => {
         console.log("Data successfully posted:", response.data);
+        // Display success popup here
+
+        // Reset form fields
+        setName("");
+        setEmail("");
+        setPhoneNumber("");
+        setLocation("");
+        setRole("");
+
+        setShowPopup(true);
+
+        setTimeout(() => {
+          setShowPopup(false);
+        }, 2000);
       })
       .catch((error) => {
         console.error("Error posting data:", error);
+        // Display error popup here
+        alert("Error posting data. Please try again.");
       });
+
     if (validateForm()) {
       // Form is valid, proceed with signup
       createUserWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
           console.log(userCredential);
           // You can make an API request to save the additional user data (name, role, phoneNumber) here
+          navigate("/");
         })
         .catch((error) => {
           console.log(error);
@@ -413,6 +431,11 @@ export default function SignUp() {
               <div className="mt-5 p-4 bg-light">
                 <div className="text-center">
                   <i className="bi bi-shield-lock-fill"></i>
+                </div>
+                <div>
+                  {showPopup && (
+                    <div className="popup">User Added successfully</div>
+                  )}
                 </div>
                 <h1 className="h5 mt-3 text-center">Sign up</h1>
                 <form noValidate onSubmit={handleSubmit} className="mt-3">
