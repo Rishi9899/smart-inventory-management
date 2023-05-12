@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
-
+import "./Analytics.css";
 import {
   LineChart,
   Line,
@@ -13,6 +13,8 @@ import {
   PieChart,
   Pie,
   Cell,
+  Bar,
+  BarChart,
 } from "recharts";
 import moment from "moment";
 
@@ -29,7 +31,6 @@ function ReceiptTable() {
   const [godown, setGodown] = useState([]);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [selectOutward, setSelectOutward] = useState(null);
-  const [selectedSupervisor, setSelectedSupervisor] = useState("");
 
   const navigate = useNavigate();
   useEffect(() => {
@@ -64,9 +65,39 @@ function ReceiptTable() {
     setSelectOutward(null);
   }
 
-  console.log(inward);
-  // const COLORS = ["#CCCCCC", "#999999", "#666666"];
+  const inwardCounts = inward.reduce((acc, curr) => {
+    const location = curr.godownId;
+    if (!acc[location]) {
+      acc[location] = 0;
+    }
+    acc[location]++;
+    return acc;
+  }, {});
 
+  const outwardCounts = outward.reduce((acc, curr) => {
+    const location = curr.godownId;
+    if (!acc[location]) {
+      acc[location] = 0;
+    }
+    acc[location]++;
+    return acc;
+  }, {});
+
+  const data = Object.keys(inwardCounts).map((location) => {
+    if (godown.length > 0) {
+      console.log("Godown", godown);
+      const loc = godown.find((e) => e.godownId === parseInt(location));
+      console.log(loc);
+      const nameloc = loc.godownLocation; // or null or some default value
+
+      return {
+        name: nameloc,
+        inward: inwardCounts[location],
+        outward: outwardCounts[location] || 0,
+      };
+    }
+  });
+  console.log("data", godown);
   const COLORS = [
     "#b8afed",
     "#a99fe2",
@@ -138,46 +169,64 @@ function ReceiptTable() {
     //     <ProductDialog receipt={selectedReceipt} onClose={handleClose} />
     //   )}
     // </div>
-    <div class="container-chart">
-      <h1>Analytics:</h1>
-      <div className="chart-row-flex-justify-content">
-        <div className="chart1">
-          <h2>Order vs Invoice Amount</h2>
-          <LineChart width={500} height={300} data={inward}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="inwardId" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="invoiceNo" stroke="#8884d8" />
-          </LineChart>
+    <div class="container-chart" style={{ height: "560px", overflow: "auto" }}>
+      <h1>Analytics</h1>
+      <div className="charts">
+        <div style={{ display: "flex", justifyContent: "space-around" }}>
+          <div className="chart1">
+            <h2>Deliveries vs Amount</h2>
+            <LineChart width={500} height={300} data={outward}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="dateOfDelivery" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="billValue" stroke="#8884d8" />
+            </LineChart>
+          </div>
+          <div className="chart2 ">
+            <h2>Godown Capacity</h2>
+
+            <PieChart width={500} height={300}>
+              <Pie
+                data={godown}
+                dataKey="godownCapacity"
+                nameKey="godownLocation"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                label={(entry) => entry.godownLocation}
+              >
+                {" "}
+                {godown.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+
+              <Tooltip />
+            </PieChart>
+            <div style={{ display: "flex", justifyContent: "space-around" }}>
+              <div className="chart3">
+                <h2>Orders count</h2>
+                <BarChart width={500} height={300} data={data}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="inward" fill="#b8afed" />
+                  <Bar dataKey="outward" fill="#6a5fad" />
+                </BarChart>
+              </div>
+            </div>
+          </div>
         </div>
-        {/* <div className="chart2 ">
-          <h2>Godown Capacity:</h2>
-          <PieChart width={500} height={300}>
-            <Pie
-              data={godown}
-              dataKey="Capacity"
-              nameKey="location"
-              cx="50%"
-              cy="50%"
-              outerRadius={100}
-              label={(entry) => entry.location}
-            >
-              {" "}
-              {godown.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </div> */}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <div class="table-container">
+        <div class="analytics-table-container">
           <h2>Inwards</h2>
           <table>
             <thead>
@@ -191,7 +240,7 @@ function ReceiptTable() {
                 <th>View Invoice</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody style={{}}>
               {inward.map((receipt) => (
                 <tr key={receipt.inwardId}>
                   <td>{receipt.invoiceNo}</td>
@@ -214,6 +263,7 @@ function ReceiptTable() {
             <ProductDialog receipt={selectedReceipt} onClose={handleClose} />
           )}
         </div>
+
         <div class="table-container">
           <h2>Outwards</h2>
           <table>
