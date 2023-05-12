@@ -199,7 +199,7 @@ const AddProduct = () => {
             variant="contained"
             type="submit"
           >
-            Add Product
+            Add
           </Button>
         </DialogActions>
       </Dialog>
